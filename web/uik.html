@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+
+<html>
+	<head>
+		<script src="//code.jquery.com/jquery-1.11.2.js" type="text/javascript"></script>
+		<script src="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet-src.js" type="text/javascript"></script>
+		<link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.3/leaflet.css"></link>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	</head>
+
+	<body ng-app="Main" ng-controller="MapController">
+	
+		<h4></h4>		
+		<div id="hits"></div>
+		<div id="map" style="width:800px; height:600px;float:left;"></div>
+		<div style="width:400px; height:600px;float:left;">
+			<div id="buttons">
+				<ul>
+					<li><button onclick="send('skip');" name="skip">Пропустить</button></li>
+					<li><button onclick="send('NoBuilding');" name="nb">Здания нет в OSM</button></li>
+					<li><button onclick="send('NoAddress');" name="na">Адреса нет в OSM</button></li>
+					<li><button onclick="send('WrongPlace');" name="wp">Неверно указаны координаты</button></li>
+					<li><button onclick="send('OK');" name="ok">Все верно</button></li>
+				</ul>
+				<textarea id="comment" rows="5" name="comment" style="width:100%;"></textarea>
+			</div>
+			<div id="tags"></div>
+			<div id="gazetteer"></div>
+		</div>
+		
+		<script type="text/javascript">
+			$.getJSON('//localhost:8081/uik/unreviewed/random.json?rnd=' + Math.floor(Math.random()*10000), function(data) {
+				$('h4').html(data.name);
+				
+				window.uik_id = data.id;
+				
+				var map = L.map('map').setView([data.lat, data.lon], 17);
+				window.map = map;
+				
+				L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png').addTo(map);
+				L.marker([data.lat, data.lon]).addTo(map);
+				
+				$('#hits').html('Еще не обработано: ' + data._hits);
+				
+				$.getJSON('http://tr1.nowtaxi.ru/api/location/latlon/'+data.lat+'/'+data.lon+'/_related', function(feature){
+					if(feature && feature.tags) {
+						var tagsHtml = '<table>';
+						for(var k in feature.tags) {
+							if(k.indexOf('addr')>=0 && (k.indexOf('housenumber') >= 0 || k.indexOf('street') >= 0)) {
+								tagsHtml += '<tr><td><b>' + k + '</b></td><td>' + 	feature.tags[k] + '</td><tr>';
+							}
+							else {
+								tagsHtml += '<tr><td>' + k + '</td><td>' + 	feature.tags[k] + '</td><tr>';
+							}
+						}						
+						tagsHtml += '</table>';
+						$('#tags').html(tagsHtml);
+					}
+				});
+				
+				$.getJSON('http://tr1.nowtaxi.ru/api/location/_search?q=' + data.name, function(answer) {
+					if(answer.hits) {
+						$('#gazetteer').html("Gazetteer Answered").css('background-color', 'green');
+						var cp = answer.features[0].center_point;
+						L.marker([cp.lat, cp.lon]).addTo(map);
+					}
+					else {
+						$('#gazetteer').html("Gazetteer failed").css('background-color', 'red');
+					}
+				});
+				
+			});
+			
+			function send(action) {
+				if(action == 'skip') {
+					window.location = window.location;
+				}
+				else {
+					$.post('//localhost:8081/uik/' + window.uik_id + '/review', {
+						'action': action,
+						'comment': $('#comment').val()
+					}, 
+					function() {
+						window.location = window.location;
+					});
+				}
+			}
+		</script>
+		
+	</body>
+</html>
