@@ -11,6 +11,7 @@ import me.osm.tools.uikrecheck.bobjects.Uik;
 import me.osm.tools.uikrecheck.dao.UIKDao;
 import me.osm.tools.uikrecheck.hutil.HyperSqlDbServer;
 import me.osm.tools.uikrecheck.hutil.SessionFactorySinglton;
+import me.osm.tools.uikrecheck.rest.ReportREST;
 import me.osm.tools.uikrecheck.rest.UikImport;
 import me.osm.tools.uikrecheck.rest.UikRest;
 import me.osm.tools.uikrecheck.serilization.SerializationProvider;
@@ -55,6 +56,16 @@ public class UIKCheck {
 					}
 				});
 
+		rest.uri("/uik/report.{format}",
+				new ReportREST())
+				.method(HttpMethod.GET)
+				.flag(Flags.Cache.DONT_CACHE);
+
+		rest.uri("/uik/_import",
+				new UikImport())
+				.method(HttpMethod.GET)
+				.flag(Flags.Cache.DONT_CACHE);
+
 		rest.uri("/uik/unreviewed/random.{format}",
 				new UikRest())
 				.method(HttpMethod.GET)
@@ -66,11 +77,12 @@ public class UIKCheck {
 				.method(HttpMethod.POST)
 				.flag(Flags.Cache.DONT_CACHE);
 
-		rest.uri("/uik/_import",
-				new UikImport())
+		rest.uri("/uik/{id}.{format}",
+				new UikRest())
 				.method(HttpMethod.GET)
 				.flag(Flags.Cache.DONT_CACHE);
-
+		
+		
 		rest.bind(8081);
 
 		Runtime runtime = Runtime.getRuntime();

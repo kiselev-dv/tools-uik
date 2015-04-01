@@ -1,5 +1,6 @@
 package me.osm.tools.uikrecheck.rest;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -20,17 +21,30 @@ public class UikRest {
 
 		Transaction trx = SessionFactorySinglton.getFactory().getCurrentSession().beginTransaction();
 		try {
-			Uik uik = UIKDao.randomUnreviwed();
-			JSONObject result = new JSONObject();
+			Uik uik = null;
+			if(request.getHeader("id") == null) {
+				uik = UIKDao.randomUnreviwed();
+			}
+			else {
+				uik = UIKDao.getById(Integer.parseInt(request.getHeader("id")));
+			}
 			
-			result.put("name", uik.getName());
-			result.put("id", uik.getId());
-			result.put("lon", uik.getLon());
-			result.put("lat", uik.getLat());
-
-			result.put("_hits", UIKDao.countUnreviwed());
-			
-			return result; 
+			if(uik != null) {
+				JSONObject result = new JSONObject();
+				
+				result.put("name", uik.getName());
+				result.put("id", uik.getId());
+				result.put("lon", uik.getLon());
+				result.put("lat", uik.getLat());
+				
+				result.put("_hits", UIKDao.countUnreviwed());
+				
+				return result; 
+			}
+			else {
+				response.setResponseCode(404);
+				return null;
+			} 
 		}
 		finally {
 			trx.commit();
@@ -49,6 +63,7 @@ public class UikRest {
 				Revision revision = new Revision();
 				revision.setAction(action);
 				revision.setNote(StringUtils.substring(comment, 0, 1000));
+				revision.setRevisionDate(new Date());
 				
 				Uik subject = new Uik();
 				subject.setId(subj);
