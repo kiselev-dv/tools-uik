@@ -2,14 +2,13 @@ package me.osm.tools.uikrecheck.dao;
 
 import java.util.List;
 
-import org.hibernate.Criteria;
-import org.hibernate.Query;
-import org.hibernate.Session;
-import org.hibernate.criterion.ExistsSubqueryExpression;
-
 import me.osm.tools.uikrecheck.bobjects.Revision;
 import me.osm.tools.uikrecheck.bobjects.Uik;
 import me.osm.tools.uikrecheck.hutil.SessionFactorySinglton;
+
+import org.hibernate.Criteria;
+import org.hibernate.Query;
+import org.hibernate.Session;
 
 
 public class UIKDao {
@@ -34,7 +33,6 @@ public class UIKDao {
 		return q.list();
 	}
 
-	@SuppressWarnings("unchecked")
 	public static Uik randomUnreviwed() {
 		
 		Session session = SessionFactorySinglton.getFactory().getCurrentSession();
@@ -45,12 +43,11 @@ public class UIKDao {
 		q.setMaxResults(1);
 		q.setFetchSize(0);
 		
-		List list = q.list();
+		List<?> list = q.list();
 		
 		return list.isEmpty() ? null : (Uik)list.get(0);
 	}
 
-	@SuppressWarnings("unchecked")
 	public static int countUnreviwed() {
 		
 		Session session = SessionFactorySinglton.getFactory().getCurrentSession();
